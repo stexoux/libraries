@@ -18,10 +18,9 @@ local ImGui = {
 		}
 	},
 
-	Windows    = {},
-	Animation  = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-	UIAssetId  = "rbxassetid://76246418997296",
-	NoWarnings = true,
+	Windows   = {},
+	Animation = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+	UIAssetId = "rbxassetid://76246418997296",
 }
 
 local NullFn   = function() end
@@ -35,34 +34,17 @@ local TweenService     = GetService("TweenService")
 local UserInputService = GetService("UserInputService")
 local Players          = GetService("Players")
 local CoreGui          = GetService("CoreGui")
-local RunService       = GetService("RunService")
 
 local LocalPlayer = Players.LocalPlayer
-local PlayerGui   = LocalPlayer.PlayerGui
 local Mouse       = LocalPlayer:GetMouse()
-local IsStudio    = RunService:IsStudio()
-
-ImGui.NoWarnings = not IsStudio
-
-function ImGui:Warn(...)
-	if self.NoWarnings then return end
-	warn("[ImGui]", ...)
-end
 
 function ImGui:FetchUI()
-	local key = "DepsoImGui"
+	local key = "ImGuiLib"
 	if _G[key] then
-		self:Warn("Prefabs loaded from cache")
 		return _G[key]
 	end
 
-	local ui
-	if IsStudio then
-		ui = PlayerGui:FindFirstChild(key) or script.DepsoImGui
-	else
-		ui = game:GetObjects(ImGui.UIAssetId)[1]
-	end
-
+	local ui = game:GetObjects(ImGui.UIAssetId)[1]
 	_G[key] = ui
 	return ui
 end
@@ -256,9 +238,9 @@ function ImGui:HeaderAnimate(header, animate, open, titleBar, toggle)
 	local container = header:FindFirstChild("ChildContainer")
 	if not container then return end
 
-	local layout    = container.UIListLayout
-	local padding   = container:FindFirstChildOfClass("UIPadding")
-	local content   = layout.AbsoluteContentSize
+	local layout  = container.UIListLayout
+	local padding = container:FindFirstChildOfClass("UIPadding")
+	local content = layout.AbsoluteContentSize
 
 	if padding then
 		local py = padding.PaddingTop.Offset + padding.PaddingBottom.Offset
@@ -355,8 +337,8 @@ end
 function ImGui:ApplyResizable(minSize, frame, dragger, config)
 	minSize = minSize or Vector2.new(160, 90)
 
-	local dragStart   = nil
-	local originSize  = nil
+	local dragStart  = nil
+	local originSize = nil
 
 	dragger.MouseButton1Down:Connect(function()
 		if dragStart then return end
@@ -477,8 +459,8 @@ function ImGui:Dropdown(config)
 end
 
 function ImGui:ContainerClass(frame, cls, windowKey)
-	local container   = cls or {}
-	local windowCfg   = ImGui.Windows[windowKey]
+	local container = cls or {}
+	local windowCfg = ImGui.Windows[windowKey]
 
 	function container:NewInstance(inst, icls, parent)
 		icls = icls or {}
@@ -543,7 +525,7 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 		local value   = cfg.Value or false
 
 		if isRadio then
-			tick.ImageTransparency   = 1
+			tick.ImageTransparency      = 1
 			tick.BackgroundTransparency = 0
 		else
 			tickbox:FindFirstChildOfClass("UIPadding"):Remove()
@@ -621,9 +603,9 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 
 	function container:InputText(cfg)
 		cfg = cfg or {}
-		local wrap    = Prefabs.TextInput:Clone()
-		local box     = wrap.Input
-		local obj     = self:NewInstance(wrap, cfg)
+		local wrap = Prefabs.TextInput:Clone()
+		local box  = wrap.Input
+		local obj  = self:NewInstance(wrap, cfg)
 
 		box.Text            = cfg.Value or ""
 		box.PlaceholderText = cfg.PlaceHolder or ""
@@ -659,8 +641,8 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 	end
 
 	function container:GetRemainingHeight()
-		local padding  = frame:FindFirstChildOfClass("UIPadding")
-		local layout   = frame:FindFirstChildOfClass("UIListLayout")
+		local padding   = frame:FindFirstChildOfClass("UIPadding")
+		local layout    = frame:FindFirstChildOfClass("UIListLayout")
 		local layoutPad = layout.Padding
 		local padTotal  = padding.PaddingTop + padding.PaddingBottom + layoutPad
 		local usedY     = frame.AbsoluteSize.Y + padTotal.Offset + 3
@@ -748,9 +730,9 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 		end
 
 		function cfg:CreateRow()
-			local rowClass     = {}
-			local row          = tbl.RowTemp:Clone()
-			local layout       = row:FindFirstChildOfClass("UIListLayout")
+			local rowClass        = {}
+			local row             = tbl.RowTemp:Clone()
+			local layout          = row:FindFirstChildOfClass("UIListLayout")
 			local baseRowChildren = #row:GetChildren()
 
 			layout.VerticalAlignment = Enum.VerticalAlignment[cfg.Align or "Center"]
@@ -829,8 +811,8 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 
 	function container:CollapsingHeader(cfg)
 		cfg = cfg or {}
-		local title  = cfg.Title or ""
-		cfg.Name     = title
+		local title = cfg.Title or ""
+		cfg.Name    = title
 
 		local header   = Prefabs.CollapsingHeader:Clone()
 		local titleBar = header.TitleBar
@@ -910,21 +892,21 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 
 	function container:Slider(cfg)
 		cfg = cfg or {}
-		local value     = cfg.Value or 0
-		local fmt       = cfg.Format or "%.d"
+		local value      = cfg.Value or 0
+		local fmt        = cfg.Format or "%.d"
 		local isProgress = cfg.Progress
-		cfg.Name        = cfg.Label or ""
+		cfg.Name         = cfg.Label or ""
 
-		local slider    = Prefabs.Slider:Clone()
-		local uiPad     = slider:FindFirstChildOfClass("UIPadding")
-		local grab      = slider.Grab
-		local valText   = slider.ValueText
-		local lbl       = slider.Label
+		local slider  = Prefabs.Slider:Clone()
+		local uiPad   = slider:FindFirstChildOfClass("UIPadding")
+		local grab    = slider.Grab
+		local valText = slider.ValueText
+		local lbl     = slider.Label
 
-		local dragging   = false
-		local moveConn   = nil
-		local inputType  = Enum.UserInputType.MouseButton1
-		local obj        = self:NewInstance(slider, cfg)
+		local dragging  = false
+		local moveConn  = nil
+		local inputType = Enum.UserInputType.MouseButton1
+		local obj       = self:NewInstance(slider, cfg)
 
 		local function fire(...)
 			return (cfg.Callback or NullFn)(obj, ...)
@@ -935,11 +917,11 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 			local padSide = UDim.new(0, 2)
 			local diff    = uiPad.PaddingLeft - padSide
 
-			grab.AnchorPoint        = Vector2.new(0, 0.5)
-			grad.Enabled            = true
-			uiPad.PaddingLeft       = padSide
-			uiPad.PaddingRight      = padSide
-			lbl.Position            = UDim2.new(1, 15 - diff.Offset, 0, 0)
+			grab.AnchorPoint   = Vector2.new(0, 0.5)
+			grad.Enabled       = true
+			uiPad.PaddingLeft  = padSide
+			uiPad.PaddingRight = padSide
+			lbl.Position       = UDim2.new(1, 15 - diff.Offset, 0, 0)
 		end
 
 		function cfg:SetValue(v, fromSlider)
@@ -961,7 +943,7 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 				or  { Position = UDim2.fromScale(pct, 0.5) }
 			)
 
-			cfg.Value  = v
+			cfg.Value    = v
 			valText.Text = fmt:format(v, max)
 			fire(v)
 			return cfg
@@ -1016,12 +998,12 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 
 	function container:Keybind(cfg)
 		cfg = cfg or {}
-		local key      = cfg.Value
-		local nullKey  = cfg.NullKey or Enum.KeyCode.Backspace
+		local key     = cfg.Value
+		local nullKey = cfg.NullKey or Enum.KeyCode.Backspace
 
-		local keybind  = Prefabs.Keybind:Clone()
-		local valText  = keybind.ValueText
-		local obj      = nil
+		local keybind = Prefabs.Keybind:Clone()
+		local valText = keybind.ValueText
+		local obj     = nil
 
 		local function fire(...)
 			return (cfg.Callback or NullFn)(obj, ...)
@@ -1067,10 +1049,10 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 		cfg.Open  = false
 		cfg.Value = ""
 
-		local combo    = Prefabs.Combo:Clone()
-		local toggle   = combo.Toggle.ToggleButton
-		local valText  = combo.ValueText
-		valText.Text   = cfg.Placeholder or ""
+		local combo   = Prefabs.Combo:Clone()
+		local toggle  = combo.Toggle.ToggleButton
+		local valText = combo.ValueText
+		valText.Text  = cfg.Placeholder or ""
 
 		local dropdown = nil
 		local obj      = self:NewInstance(combo, cfg)
@@ -1128,11 +1110,24 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 	return container
 end
 
+local TAB_ACTIVE_TRANSPARENCY = 0.85
+local TAB_IDLE_TRANSPARENCY   = 1
+
+local function setTabActive(btn, active)
+	ImGui:Tween(btn, {
+		BackgroundTransparency = active and TAB_ACTIVE_TRANSPARENCY or TAB_IDLE_TRANSPARENCY,
+	})
+	pcall(function()
+		local weight = active and Enum.FontWeight.Bold or Enum.FontWeight.Regular
+		btn.FontFace = Font.new(btn.FontFace.Family, weight)
+	end)
+end
+
 function ImGui:CreateWindow(wcfg)
-	local window  = Prefabs.Window:Clone()
+	local window   = Prefabs.Window:Clone()
 	window.Parent  = ImGui.ScreenGui
 	window.Visible = true
-	wcfg.Window   = window
+	wcfg.Window    = window
 
 	local content = window.Content
 	local body    = content.Body
@@ -1224,10 +1219,12 @@ function ImGui:CreateWindow(wcfg)
 	end
 
 	function wcfg:Center()
-		local sz  = window.AbsoluteSize
+		local sz = window.AbsoluteSize
 		self:SetPosition(UDim2.new(0.5, -sz.X / 2, 0.5, -sz.Y / 2))
 		return self
 	end
+
+	local activeTabButton = nil
 
 	function wcfg:ShowTab(tabCls)
 		local target = tabCls.Content
@@ -1238,6 +1235,15 @@ function ImGui:CreateWindow(wcfg)
 			page.Visible = (page == target)
 		end
 		ImGui:Tween(target, { Position = UDim2.fromOffset(0, 0) })
+
+		if activeTabButton then
+			setTabActive(activeTabButton, false)
+		end
+		activeTabButton = tabCls.Button
+		if activeTabButton then
+			setTabActive(activeTabButton, true)
+		end
+
 		return self
 	end
 
@@ -1252,7 +1258,7 @@ function ImGui:CreateWindow(wcfg)
 		tabBtn.Parent  = toolbar
 		tcfg.Button    = tabBtn
 
-		local autoAxis = wcfg.AutoSize or "Y"
+		local autoAxis   = wcfg.AutoSize or "Y"
 		local tabContent = body.Template:Clone()
 		tabContent.AutomaticSize = Enum.AutomaticSize[autoAxis]
 		tabContent.Visible       = tcfg.Visible or false
@@ -1264,6 +1270,16 @@ function ImGui:CreateWindow(wcfg)
 			tabContent.Size = UDim2.fromScale(1, 0)
 		elseif autoAxis == "X" then
 			tabContent.Size = UDim2.fromScale(0, 1)
+		end
+
+		setTabActive(tabBtn, false)
+
+		if tabContent.Visible then
+			if activeTabButton then
+				setTabActive(activeTabButton, false)
+			end
+			activeTabButton = tabBtn
+			setTabActive(tabBtn, true)
 		end
 
 		tabBtn.Activated:Connect(function()
@@ -1292,7 +1308,7 @@ function ImGui:CreateWindow(wcfg)
 		wcfg:SetOpen(not wcfg.Open)
 	end)
 
-	wcfg:SetTitle(wcfg.Title or "Depso UI")
+	wcfg:SetTitle(wcfg.Title or "Window")
 
 	if not wcfg.Open then
 		wcfg:SetOpen(true, true)
@@ -1317,17 +1333,17 @@ function ImGui:CreateModal(cfg)
 	ImGui:Tween(overlay, { BackgroundTransparency = 0.6 })
 
 	cfg = cfg or {}
-	cfg.TabsBar         = cfg.TabsBar ~= nil and cfg.TabsBar or false
-	cfg.NoCollapse      = true
-	cfg.NoResize        = true
-	cfg.NoClose         = true
-	cfg.NoSelectEffect  = true
-	cfg.AnchorPoint     = Vector2.new(0.5, 0.5)
-	cfg.Position        = UDim2.fromScale(0.5, 0.5)
+	cfg.TabsBar        = cfg.TabsBar ~= nil and cfg.TabsBar or false
+	cfg.NoCollapse     = true
+	cfg.NoResize       = true
+	cfg.NoClose        = true
+	cfg.NoSelectEffect = true
+	cfg.AnchorPoint    = Vector2.new(0.5, 0.5)
+	cfg.Position       = UDim2.fromScale(0.5, 0.5)
 
-	local win    = self:CreateWindow(cfg)
-	local tab    = win:CreateTab({ Visible = true })
-	local mgr    = ImGui:SetWindowProps({ Interactable = false }, { win.Window })
+	local win      = self:CreateWindow(cfg)
+	local tab      = win:CreateTab({ Visible = true })
+	local mgr      = ImGui:SetWindowProps({ Interactable = false }, { win.Window })
 	local winClose = win.Close
 
 	function tab:Close()
@@ -1340,17 +1356,15 @@ function ImGui:CreateModal(cfg)
 	return tab
 end
 
-local guiParent = IsStudio and PlayerGui or CoreGui
-
-ImGui.ScreenGui = ImGui:CreateInstance("ScreenGui", guiParent, {
-	DisplayOrder  = 9999,
-	ResetOnSpawn  = false,
+ImGui.ScreenGui = ImGui:CreateInstance("ScreenGui", CoreGui, {
+	DisplayOrder = 9999,
+	ResetOnSpawn = false,
 })
 
-ImGui.FullScreenGui = ImGui:CreateInstance("ScreenGui", guiParent, {
-	DisplayOrder  = 99999,
-	ResetOnSpawn  = false,
-	ScreenInsets  = Enum.ScreenInsets.None,
+ImGui.FullScreenGui = ImGui:CreateInstance("ScreenGui", CoreGui, {
+	DisplayOrder = 99999,
+	ResetOnSpawn = false,
+	ScreenInsets = Enum.ScreenInsets.None,
 })
 
 return ImGui
