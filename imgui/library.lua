@@ -1204,15 +1204,12 @@ function ImGui:CreateWindow(wcfg)
 
 	function wcfg:SetSize(size)
 		local headerY = self:GetHeaderSizeY()
-		if typeof(size) == "Vector2" then
-			size = UDim2.fromOffset(size.X, size.Y)
-		end
 		local newSize = UDim2.new(
 			size.X.Scale, size.X.Offset,
 			size.Y.Scale, size.Y.Offset + headerY
 		)
-		self.Size     = newSize
-		window.Size   = newSize
+		self.Size   = newSize
+		window.Size = newSize
 		return self
 	end
 
@@ -1317,33 +1314,22 @@ function ImGui:CreateWindow(wcfg)
 		wcfg:SetSize(wcfg.Size)
 	end
 
-	if wcfg.Transparency then
-		pcall(function() window.BackgroundTransparency = wcfg.Transparency end)
-		for _, child in window:GetDescendants() do
-			pcall(function()
-				if child:IsA("Frame") or child:IsA("ScrollingFrame") then
-					child.BackgroundTransparency = math.min(1, child.BackgroundTransparency + wcfg.Transparency)
-				end
-			end)
-		end
-	end
-
-	local anchorPositions = {
-		Center       = { Anchor = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5) },
-		TopLeft      = { Anchor = Vector2.new(0,   0),   Position = UDim2.fromScale(0,   0)   },
-		TopRight     = { Anchor = Vector2.new(1,   0),   Position = UDim2.fromScale(1,   0)   },
-		TopCenter    = { Anchor = Vector2.new(0.5, 0),   Position = UDim2.fromScale(0.5, 0)   },
-		BottomLeft   = { Anchor = Vector2.new(0,   1),   Position = UDim2.fromScale(0,   1)   },
-		BottomRight  = { Anchor = Vector2.new(1,   1),   Position = UDim2.fromScale(1,   1)   },
-		BottomCenter = { Anchor = Vector2.new(0.5, 1),   Position = UDim2.fromScale(0.5, 1)   },
-		Left         = { Anchor = Vector2.new(0,   0.5), Position = UDim2.fromScale(0,   0.5) },
-		Right        = { Anchor = Vector2.new(1,   0.5), Position = UDim2.fromScale(1,   0.5) },
+	local presetPositions = {
+		Center       = { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5) },
+		TopLeft      = { AnchorPoint = Vector2.new(0,   0),   Position = UDim2.fromScale(0,   0)   },
+		TopRight     = { AnchorPoint = Vector2.new(1,   0),   Position = UDim2.fromScale(1,   0)   },
+		TopCenter    = { AnchorPoint = Vector2.new(0.5, 0),   Position = UDim2.fromScale(0.5, 0)   },
+		BottomLeft   = { AnchorPoint = Vector2.new(0,   1),   Position = UDim2.fromScale(0,   1)   },
+		BottomRight  = { AnchorPoint = Vector2.new(1,   1),   Position = UDim2.fromScale(1,   1)   },
+		BottomCenter = { AnchorPoint = Vector2.new(0.5, 1),   Position = UDim2.fromScale(0.5, 1)   },
+		Left         = { AnchorPoint = Vector2.new(0,   0.5), Position = UDim2.fromScale(0,   0.5) },
+		Right        = { AnchorPoint = Vector2.new(1,   0.5), Position = UDim2.fromScale(1,   0.5) },
 	}
 
-	if wcfg.Anchor then
-		local preset = anchorPositions[wcfg.Anchor]
+	if wcfg.Position then
+		local preset = presetPositions[wcfg.Position]
 		if preset then
-			window.AnchorPoint = preset.Anchor
+			window.AnchorPoint = preset.AnchorPoint
 			window.Position    = preset.Position
 		end
 	end
