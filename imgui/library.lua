@@ -1313,6 +1313,41 @@ function ImGui:CreateWindow(wcfg)
 
 	wcfg:SetTitle(wcfg.Title or "Window")
 
+	if wcfg.Size then
+		wcfg:SetSize(wcfg.Size)
+	end
+
+	if wcfg.Transparency then
+		pcall(function() window.BackgroundTransparency = wcfg.Transparency end)
+		for _, child in window:GetDescendants() do
+			pcall(function()
+				if child:IsA("Frame") or child:IsA("ScrollingFrame") then
+					child.BackgroundTransparency = math.min(1, child.BackgroundTransparency + wcfg.Transparency)
+				end
+			end)
+		end
+	end
+
+	local anchorPositions = {
+		Center       = { Anchor = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5) },
+		TopLeft      = { Anchor = Vector2.new(0,   0),   Position = UDim2.fromScale(0,   0)   },
+		TopRight     = { Anchor = Vector2.new(1,   0),   Position = UDim2.fromScale(1,   0)   },
+		TopCenter    = { Anchor = Vector2.new(0.5, 0),   Position = UDim2.fromScale(0.5, 0)   },
+		BottomLeft   = { Anchor = Vector2.new(0,   1),   Position = UDim2.fromScale(0,   1)   },
+		BottomRight  = { Anchor = Vector2.new(1,   1),   Position = UDim2.fromScale(1,   1)   },
+		BottomCenter = { Anchor = Vector2.new(0.5, 1),   Position = UDim2.fromScale(0.5, 1)   },
+		Left         = { Anchor = Vector2.new(0,   0.5), Position = UDim2.fromScale(0,   0.5) },
+		Right        = { Anchor = Vector2.new(1,   0.5), Position = UDim2.fromScale(1,   0.5) },
+	}
+
+	if wcfg.Anchor then
+		local preset = anchorPositions[wcfg.Anchor]
+		if preset then
+			window.AnchorPoint = preset.Anchor
+			window.Position    = preset.Position
+		end
+	end
+
 	if not wcfg.Open then
 		wcfg:SetOpen(true, true)
 	end
