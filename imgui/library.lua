@@ -451,26 +451,92 @@ function ImGui:Dropdown(config)
 	function config:Close()
 		if config.Closed then config.Closed() end
 		hover:Disconnect()
-		selection:Remove()
+		selection:Destroy()
 	end
 
 	local template = selection.Template
 	template.Visible = false
 
+	local itemObjects = {}
+
+	local function buildLabel(idx, val)
+		return tostring(typeof(idx) ~= "number" and idx or val)
+	end
+
+	local function getValue(idx, val)
+		return typeof(idx) ~= "number" and idx or val
+	end
+
 	for idx, val in next, config.Items do
 		local item = template:Clone()
-		item.Text    = tostring(typeof(idx) ~= "number" and idx or val)
+		item.Text    = buildLabel(idx, val)
 		item.Parent  = selection
 		item.Visible = true
 		item.Activated:Connect(function()
 			config:Close()
-			config:SetValue(typeof(idx) ~= "number" and idx or val)
+			config:SetValue(getValue(idx, val))
 		end)
 		self:ApplyAnimations(item, "Tabs")
+		table.insert(itemObjects, item)
 	end
 
-	local maxY  = config.MaxSizeY or 200
-	local sizeY = math.clamp(selection.AbsoluteCanvasSize.Y, abSize.Y, maxY)
+	local searchBox = nil
+
+	if config.Searchable then
+		searchBox = Instance.new("TextBox")
+		searchBox.Name              = "SearchBox"
+		searchBox.PlaceholderText   = "Search..."
+		searchBox.Text              = ""
+		searchBox.ClearTextOnFocus  = false
+		searchBox.BackgroundTransparency = 0.85
+		searchBox.TextColor3        = Color3.fromRGB(220, 220, 220)
+		searchBox.PlaceholderColor3 = Color3.fromRGB(130, 130, 130)
+		searchBox.TextSize          = 13
+		searchBox.Font              = Enum.Font.Gotham
+		searchBox.Size              = UDim2.new(1, 0, 0, 26)
+		searchBox.BorderSizePixel   = 0
+		searchBox.ZIndex            = selection.ZIndex + 1
+
+		local searchPad = Instance.new("UIPadding", searchBox)
+		searchPad.PaddingLeft  = UDim.new(0, 8)
+		searchPad.PaddingRight = UDim.new(0, 8)
+
+		local searchCorner = Instance.new("UICorner", searchBox)
+		searchCorner.CornerRadius = UDim.new(0, 4)
+
+		searchBox.Parent = selection
+
+		local function filterItems(query)
+			query = query:lower()
+			for _, item in itemObjects do
+				local matches = query == "" or item.Text:lower():find(query, 1, true)
+				item.Visible = matches ~= nil and matches ~= false
+			end
+
+			local visibleCount = 0
+			for _, item in itemObjects do
+				if item.Visible then visibleCount += 1 end
+			end
+
+			local itemHeight  = abSize.Y
+			local searchH     = 26 + 4
+			local maxY        = config.MaxSizeY or 200
+			local contentH    = visibleCount * itemHeight + searchH
+			selection.Size    = UDim2.fromOffset(abSize.X - pad, math.clamp(contentH, itemHeight + searchH, maxY))
+		end
+
+		searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+			filterItems(searchBox.Text)
+		end)
+
+		task.defer(function()
+			searchBox:CaptureFocus()
+		end)
+	end
+
+	local maxY    = config.MaxSizeY or 200
+	local searchH = config.Searchable and 30 or 0
+	local sizeY   = math.clamp(selection.AbsoluteCanvasSize.Y + searchH, abSize.Y, maxY)
 	selection.Size = UDim2.fromOffset(abSize.X - pad, sizeY)
 
 	return config
@@ -1097,10 +1163,12 @@ function ImGui:ContainerClass(frame, cls, windowKey)
 
 			if open then
 				dropdown = ImGui:Dropdown({
-					Parent   = combo,
-					Items    = cfg.Items or {},
-					SetValue = cfg.SetValue,
-					Closed   = function()
+					Parent     = combo,
+					Items      = cfg.Items or {},
+					SetValue   = cfg.SetValue,
+					Searchable = cfg.Searchable == true,
+					MaxSizeY   = cfg.MaxSizeY,
+					Closed     = function()
 						if not hoverCfg.Hovering then
 							cfg:SetOpen(false)
 						end
