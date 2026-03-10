@@ -1114,14 +1114,17 @@ local TAB_ACTIVE_TRANSPARENCY = 0.85
 local TAB_IDLE_TRANSPARENCY   = 1
 
 local function setTabActive(btn, active)
-	ImGui:Tween(btn, {
-		BackgroundTransparency = active and TAB_ACTIVE_TRANSPARENCY or TAB_IDLE_TRANSPARENCY,
-	})
+	if not btn then return end
 	pcall(function()
-		local weight = active and Enum.FontWeight.Bold or Enum.FontWeight.Regular
-		btn.FontFace = Font.new(btn.FontFace.Family, weight)
+		TweenService:Create(btn, ImGui.Animation, {
+			BackgroundTransparency = active and TAB_ACTIVE_TRANSPARENCY or TAB_IDLE_TRANSPARENCY,
+		}):Play()
+	end)
+	pcall(function()
+		btn.FontFace = Font.new(btn.FontFace.Family, active and Enum.FontWeight.Bold or Enum.FontWeight.Regular)
 	end)
 end
+
 
 function ImGui:CreateWindow(wcfg)
 	local window   = Prefabs.Window:Clone()
