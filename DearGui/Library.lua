@@ -4,7 +4,7 @@ ImGui.__index = ImGui
 local TweenService     = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
---// classic dear imgui navy/steel palette
+--// adr1551413141az1515
 local T = {
 	WindowBg         = Color3.fromRGB(15,  15,  20),
 	WindowBorder     = Color3.fromRGB(110, 110, 128),
