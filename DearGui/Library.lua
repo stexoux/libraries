@@ -6,29 +6,30 @@ local TweenService = game:GetService('TweenService')
 local UserInputService = game:GetService('UserInputService')
 local RunService = game:GetService('RunService')
 local THEME = {
-    WindowBg = Color3.fromRGB(15, 15, 15),
-    TitleBg = Color3.fromRGB(25, 25, 25),
-    TitleBgActive = Color3.fromRGB(40, 40, 40),
-    FrameBg = Color3.fromRGB(30, 30, 30),
-    FrameBgHover = Color3.fromRGB(45, 45, 45),
-    FrameBgActive = Color3.fromRGB(60, 60, 60),
-    Button = Color3.fromRGB(50, 50, 50),
-    ButtonHover = Color3.fromRGB(70, 70, 70),
-    ButtonActive = Color3.fromRGB(100, 100, 100),
-    CheckMark = Color3.fromRGB(100, 200, 100),
-    SliderGrab = Color3.fromRGB(80, 140, 220),
-    SliderGrabActive = Color3.fromRGB(110, 170, 255),
-    Tab = Color3.fromRGB(35, 35, 35),
-    TabActive = Color3.fromRGB(55, 55, 55),
-    TabHover = Color3.fromRGB(50, 50, 50),
-    Separator = Color3.fromRGB(50, 50, 50),
-    Border = Color3.fromRGB(60, 60, 60),
-    Text = Color3.fromRGB(220, 220, 220),
-    TextDim = Color3.fromRGB(140, 140, 140),
-    Accent = Color3.fromRGB(80, 140, 220),
-    Dropdown = Color3.fromRGB(20, 20, 20),
-    DropdownItem = Color3.fromRGB(30, 30, 30),
-    DropdownHover = Color3.fromRGB(50, 70, 110),
+    WindowBg = Color3.fromRGB(15, 15, 20),
+    TitleBg = Color3.fromRGB(35, 50, 100),
+    TitleBgActive = Color3.fromRGB(45, 65, 130),
+    TitleBgCollapsed = Color3.fromRGB(30, 40, 80),
+    FrameBg = Color3.fromRGB(40, 50, 80),
+    FrameBgHover = Color3.fromRGB(55, 68, 105),
+    FrameBgActive = Color3.fromRGB(70, 90, 140),
+    Button = Color3.fromRGB(60, 80, 150),
+    ButtonHover = Color3.fromRGB(75, 100, 175),
+    ButtonActive = Color3.fromRGB(95, 125, 210),
+    CheckMark = Color3.fromRGB(100, 200, 255),
+    SliderGrab = Color3.fromRGB(90, 130, 220),
+    SliderGrabActive = Color3.fromRGB(120, 165, 255),
+    Tab = Color3.fromRGB(30, 40, 75),
+    TabActive = Color3.fromRGB(55, 80, 150),
+    TabHover = Color3.fromRGB(45, 65, 120),
+    Separator = Color3.fromRGB(70, 85, 130),
+    Border = Color3.fromRGB(80, 100, 160),
+    Text = Color3.fromRGB(255, 255, 255),
+    TextDim = Color3.fromRGB(160, 175, 210),
+    Accent = Color3.fromRGB(90, 130, 220),
+    Dropdown = Color3.fromRGB(20, 25, 45),
+    DropdownItem = Color3.fromRGB(35, 45, 80),
+    DropdownHover = Color3.fromRGB(60, 85, 150),
 }
 local FONT = Enum.Font.Code
 local FONT_SIZE = 14
@@ -159,7 +160,22 @@ function ImGui.new(title, width, height)
         ZIndex = 10,
     })
 
-    label(titleBar, title or 'ImGui Window', UDim2.new(0, PAD, 0, 0), UDim2.new(1, -PAD, 1, 0), THEME.Text, FONT_SIZE, Enum.TextXAlignment.Left).ZIndex = 11
+    label(titleBar, title or 'ImGui Window', UDim2.new(0, 30, 0, 0), UDim2.new(1, -56, 1, 0), THEME.Text, FONT_SIZE, Enum.TextXAlignment.Left).ZIndex = 11
+
+    local collapseBtn = newInstance('TextButton', {
+        Parent = titleBar,
+        Size = UDim2.new(0, 20, 0, 20),
+        Position = UDim2.new(0, 4, 0.5, -10),
+        BackgroundColor3 = Color3.fromRGB(60, 80, 140),
+        Text = '\u{25bc}',
+        TextColor3 = THEME.Text,
+        Font = FONT,
+        TextSize = 11,
+        BorderSizePixel = 0,
+        ZIndex = 12,
+    })
+
+    corner(collapseBtn, 3)
 
     local closeBtn = newInstance('TextButton', {
         Parent = titleBar,
@@ -180,6 +196,9 @@ function ImGui.new(title, width, height)
     end)
     makeDraggable(titleBar, window)
 
+    local collapsed = false
+    local expandedSize = UDim2.new(0, self.Width, 0, self.Height)
+    local collapsedSize = UDim2.new(0, self.Width, 0, 28)
     local content = newInstance('ScrollingFrame', {
         Name = 'Content',
         Parent = window,
@@ -193,6 +212,28 @@ function ImGui.new(title, width, height)
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
     })
+
+    collapseBtn.MouseButton1Click:Connect(function()
+        collapsed = not collapsed
+
+        if collapsed then
+            collapseBtn.Text = '\u{25b6}'
+            content.Visible = false
+
+            makeTween(window, {Size = collapsedSize}, 0.15)
+            makeTween(titleBar, {
+                BackgroundColor3 = THEME.TitleBgCollapsed,
+            }, 0.1)
+        else
+            collapseBtn.Text = '\u{25bc}'
+            content.Visible = true
+
+            makeTween(window, {Size = expandedSize}, 0.15)
+            makeTween(titleBar, {
+                BackgroundColor3 = THEME.TitleBgActive,
+            }, 0.1)
+        end
+    end)
 
     self._gui = screenGui
     self._window = window
