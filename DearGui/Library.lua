@@ -1,5 +1,3 @@
--- ts file was generated at discord.gg/25ms
-
 local ImGui = {}
 
 ImGui.__index = ImGui
