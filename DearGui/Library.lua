@@ -1,760 +1,686 @@
 local ImGui = {}
-
 ImGui.__index = ImGui
 
-local TweenService = game:GetService('TweenService')
-local UserInputService = game:GetService('UserInputService')
-local RunService = game:GetService('RunService')
-local THEME = {
-    WindowBg = Color3.fromRGB(15, 15, 20),
-    TitleBg = Color3.fromRGB(35, 50, 100),
-    TitleBgActive = Color3.fromRGB(45, 65, 130),
-    TitleBgCollapsed = Color3.fromRGB(30, 40, 80),
-    FrameBg = Color3.fromRGB(40, 50, 80),
-    FrameBgHover = Color3.fromRGB(55, 68, 105),
-    FrameBgActive = Color3.fromRGB(70, 90, 140),
-    Button = Color3.fromRGB(60, 80, 150),
-    ButtonHover = Color3.fromRGB(75, 100, 175),
-    ButtonActive = Color3.fromRGB(95, 125, 210),
-    CheckMark = Color3.fromRGB(100, 200, 255),
-    SliderGrab = Color3.fromRGB(90, 130, 220),
-    SliderGrabActive = Color3.fromRGB(120, 165, 255),
-    Tab = Color3.fromRGB(30, 40, 75),
-    TabActive = Color3.fromRGB(55, 80, 150),
-    TabHover = Color3.fromRGB(45, 65, 120),
-    Separator = Color3.fromRGB(70, 85, 130),
-    Border = Color3.fromRGB(80, 100, 160),
-    Text = Color3.fromRGB(255, 255, 255),
-    TextDim = Color3.fromRGB(160, 175, 210),
-    Accent = Color3.fromRGB(90, 130, 220),
-    Dropdown = Color3.fromRGB(20, 25, 45),
-    DropdownItem = Color3.fromRGB(35, 45, 80),
-    DropdownHover = Color3.fromRGB(60, 85, 150),
+local TweenService     = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+--// classic dear imgui navy/steel palette
+local T = {
+	WindowBg         = Color3.fromRGB(15,  15,  20),
+	WindowBorder     = Color3.fromRGB(110, 110, 128),
+	TitleBg          = Color3.fromRGB(35,  50,  100),
+	TitleBgActive    = Color3.fromRGB(41,  74,  122),
+	TitleBgCollapsed = Color3.fromRGB(26,  26,  51),
+	FrameBg          = Color3.fromRGB(41,  74,  122),
+	FrameBgHover     = Color3.fromRGB(66,  99,  148),
+	FrameBgActive    = Color3.fromRGB(66,  99,  148),
+	Button           = Color3.fromRGB(66,  113, 174),
+	ButtonHover      = Color3.fromRGB(79,  135, 208),
+	ButtonActive     = Color3.fromRGB(15,  135, 250),
+	CheckMark        = Color3.fromRGB(102, 179, 255),
+	SliderGrab       = Color3.fromRGB(61,  133, 224),
+	SliderGrabActive = Color3.fromRGB(66,  150, 250),
+	SliderTrack      = Color3.fromRGB(41,  74,  122),
+	Tab              = Color3.fromRGB(46,  89,  148),
+	TabHovered       = Color3.fromRGB(66,  102, 170),
+	TabActive        = Color3.fromRGB(51,  102, 168),
+	TabBar           = Color3.fromRGB(20,  20,  36),
+	Separator        = Color3.fromRGB(110, 110, 128),
+	Text             = Color3.fromRGB(255, 255, 255),
+	TextDisabled     = Color3.fromRGB(128, 128, 128),
+	DropdownBg       = Color3.fromRGB(20,  20,  36),
+	DropdownItem     = Color3.fromRGB(30,  40,  70),
+	DropdownHover    = Color3.fromRGB(66,  113, 174),
+	ScrollBar        = Color3.fromRGB(61,  133, 224),
 }
-local FONT = Enum.Font.Code
-local FONT_SIZE = 14
-local PAD = 8
-local ITEM_H = 24
-local CORNER = 4
 
-local function makeTween(obj, props, t)
-    TweenService:Create(obj, TweenInfo.new(t or 0.12, Enum.EasingStyle.Quad), props):Play()
-end
-local function newInstance(class, props)
-    local obj = Instance.new(class)
+local FONT     = Enum.Font.Code
+local FSIZE    = 13
+local PAD      = 8
+local ITEM_H   = 22
+local CORNER   = 3
+local ANIM     = TweenInfo.new(0.1,  Enum.EasingStyle.Quad)
+local ANIM_MED = TweenInfo.new(0.15, Enum.EasingStyle.Quad)
 
-    for k, v in pairs(props)do
-        obj[k] = v
-    end
+local function tween(obj, props, info)
+	TweenService:Create(obj, info or ANIM, props):Play()
+end
 
-    return obj
+local function inst(class, props)
+	local o = Instance.new(class)
+	for k, v in pairs(props) do o[k] = v end
+	return o
 end
-local function label(parent, text, pos, size, color, fontSize, xAlign)
-    return newInstance('TextLabel', {
-        Parent = parent,
-        Text = text,
-        Position = pos or UDim2.new(0, 0, 0, 0),
-        Size = size or UDim2.new(1, 0, 0, ITEM_H),
-        BackgroundTransparency = 1,
-        TextColor3 = color or THEME.Text,
-        Font = FONT,
-        TextSize = fontSize or FONT_SIZE,
-        TextXAlignment = xAlign or Enum.TextXAlignment.Left,
-        TextYAlignment = Enum.TextYAlignment.Center,
-        ClipsDescendants = false,
-    })
+
+local function applyCorner(parent, r)
+	inst("UICorner", { Parent = parent, CornerRadius = UDim.new(0, r or CORNER) })
 end
-local function corner(parent, radius)
-    newInstance('UICorner', {
-        Parent = parent,
-        CornerRadius = UDim.new(0, radius or CORNER),
-    })
+
+local function applyStroke(parent, color, thickness)
+	inst("UIStroke", {
+		Parent          = parent,
+		Color           = color or T.WindowBorder,
+		Thickness       = thickness or 1,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+	})
 end
-local function stroke(parent, color, thickness)
-    newInstance('UIStroke', {
-        Parent = parent,
-        Color = color or THEME.Border,
-        Thickness = thickness or 1,
-    })
+
+local function mkLabel(parent, text, pos, size, color, fs, xAlign)
+	return inst("TextLabel", {
+		Parent               = parent,
+		Text                 = text,
+		Position             = pos  or UDim2.new(0, 0, 0, 0),
+		Size                 = size or UDim2.new(1, 0, 0, ITEM_H),
+		BackgroundTransparency = 1,
+		TextColor3           = color or T.Text,
+		Font                 = FONT,
+		TextSize             = fs or FSIZE,
+		TextXAlignment       = xAlign or Enum.TextXAlignment.Left,
+		TextYAlignment       = Enum.TextYAlignment.Center,
+		ClipsDescendants     = false,
+	})
 end
-local function hoverable(frame, normal, hover)
-    frame.MouseEnter:Connect(function()
-        makeTween(frame, {BackgroundColor3 = hover})
-    end)
-    frame.MouseLeave:Connect(function()
-        makeTween(frame, {BackgroundColor3 = normal})
-    end)
-end
+
 local function makeDraggable(handle, target)
-    local dragging, dragStart, startPos
-
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = target.Position
-        end
-    end)
-    handle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-
-            target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
+	local dragging, origin, winOrigin
+	handle.InputBegan:Connect(function(input)
+		if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+		dragging  = true
+		origin    = input.Position
+		winOrigin = target.Position
+	end)
+	handle.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if not dragging or input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+		local d = input.Position - origin
+		tween(target, {
+			Position = UDim2.new(winOrigin.X.Scale, winOrigin.X.Offset + d.X, winOrigin.Y.Scale, winOrigin.Y.Offset + d.Y)
+		})
+	end)
 end
+
+--// ─── WINDOW ──────────────────────────────────────────────────────────────────
 
 function ImGui.new(title, width, height)
-    local self = setmetatable({}, ImGui)
+	local self      = setmetatable({}, ImGui)
+	self.Width      = width  or 320
+	self.Height     = height or 440
+	self._tabs      = {}
+	self._activeTab = nil
+	self._yOffset   = PAD
 
-    self.Width = width or 300
-    self.Height = height or 400
-    self._yOffset = 0
-    self._tabs = {}
-    self._activeTab = nil
+	local gui = inst("ScreenGui", {
+		Name           = "DearImGui",
+		ResetOnSpawn   = false,
+		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+		Parent         = game:GetService("CoreGui"),
+	})
 
-    local screenGui = newInstance('ScreenGui', {
-        Name = 'ImGuiLib',
-        ResetOnSpawn = false,
-        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        Parent = game:GetService('CoreGui'),
-    })
-    local window = newInstance('Frame', {
-        Name = 'Window',
-        Parent = screenGui,
-        Size = UDim2.new(0, self.Width, 0, self.Height),
-        Position = UDim2.new(0.5, -self.Width / 2, 0.5, -self.Height / 2),
-        BackgroundColor3 = THEME.WindowBg,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
-    })
+	local win = inst("Frame", {
+		Parent           = gui,
+		Size             = UDim2.new(0, self.Width, 0, self.Height),
+		Position         = UDim2.new(0.5, -self.Width / 2, 0.5, -self.Height / 2),
+		BackgroundColor3 = T.WindowBg,
+		BorderSizePixel  = 0,
+		ClipsDescendants = true,
+	})
+	applyCorner(win, CORNER)
+	applyStroke(win, T.WindowBorder, 1)
 
-    corner(window, CORNER)
-    stroke(window, THEME.Border, 1)
+	local titleBar = inst("Frame", {
+		Parent           = win,
+		Size             = UDim2.new(1, 0, 0, 26),
+		BackgroundColor3 = T.TitleBgActive,
+		BorderSizePixel  = 0,
+		ZIndex           = 10,
+	})
+	applyCorner(titleBar, CORNER)
 
-    local titleBar = newInstance('Frame', {
-        Name = 'TitleBar',
-        Parent = window,
-        Size = UDim2.new(1, 0, 0, 28),
-        BackgroundColor3 = THEME.TitleBg,
-        BorderSizePixel = 0,
-        ZIndex = 10,
-    })
+	--// square off the bottom of the title bar so it sits flush
+	inst("Frame", {
+		Parent           = titleBar,
+		Size             = UDim2.new(1, 0, 0, CORNER),
+		Position         = UDim2.new(0, 0, 1, -CORNER),
+		BackgroundColor3 = T.TitleBgActive,
+		BorderSizePixel  = 0,
+		ZIndex           = 10,
+	})
 
-    newInstance('UICorner', {
-        Parent = titleBar,
-        CornerRadius = UDim.new(0, CORNER),
-    })
+	--// collapse arrow, no button background — just the glyph
+	local collapseBtn = inst("TextButton", {
+		Parent               = titleBar,
+		Size                 = UDim2.new(0, 18, 0, 18),
+		Position             = UDim2.new(0, 5, 0.5, -9),
+		BackgroundTransparency = 1,
+		Text                 = "▼",
+		TextColor3           = T.Text,
+		Font                 = FONT,
+		TextSize             = 10,
+		BorderSizePixel      = 0,
+		ZIndex               = 12,
+		AutoButtonColor      = false,
+	})
 
-    local bottomCover = newInstance('Frame', {
-        Parent = titleBar,
-        Size = UDim2.new(1, 0, 0, CORNER),
-        Position = UDim2.new(0, 0, 1, -CORNER),
-        BackgroundColor3 = THEME.TitleBg,
-        BorderSizePixel = 0,
-        ZIndex = 10,
-    })
+	mkLabel(titleBar,
+		title or "Dear ImGui",
+		UDim2.new(0, 26, 0, 0),
+		UDim2.new(1, -30, 1, 0),
+		T.Text, FSIZE
+	).ZIndex = 11
 
-    label(titleBar, title or 'ImGui Window', UDim2.new(0, 30, 0, 0), UDim2.new(1, -56, 1, 0), THEME.Text, FONT_SIZE, Enum.TextXAlignment.Left).ZIndex = 11
+	--// 1px line below title
+	inst("Frame", {
+		Parent           = win,
+		Size             = UDim2.new(1, 0, 0, 1),
+		Position         = UDim2.new(0, 0, 0, 26),
+		BackgroundColor3 = T.Separator,
+		BorderSizePixel  = 0,
+		ZIndex           = 5,
+	})
 
-    local collapseBtn = newInstance('TextButton', {
-        Parent = titleBar,
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(0, 4, 0.5, -10),
-        BackgroundColor3 = Color3.fromRGB(60, 80, 140),
-        Text = '\u{25bc}',
-        TextColor3 = THEME.Text,
-        Font = FONT,
-        TextSize = 11,
-        BorderSizePixel = 0,
-        ZIndex = 12,
-    })
+	makeDraggable(titleBar, win)
 
-    corner(collapseBtn, 3)
+	local content = inst("ScrollingFrame", {
+		Name                 = "Content",
+		Parent               = win,
+		Size                 = UDim2.new(1, 0, 1, -28),
+		Position             = UDim2.new(0, 0, 0, 28),
+		BackgroundTransparency = 1,
+		BorderSizePixel      = 0,
+		ScrollBarThickness   = 3,
+		ScrollBarImageColor3 = T.ScrollBar,
+		CanvasSize           = UDim2.new(0, 0, 0, 0),
+		AutomaticCanvasSize  = Enum.AutomaticSize.Y,
+		ScrollingDirection   = Enum.ScrollingDirection.Y,
+		ZIndex               = 2,
+	})
 
-    local closeBtn = newInstance('TextButton', {
-        Parent = titleBar,
-        Size = UDim2.new(0, 20, 0, 20),
-        Position = UDim2.new(1, -24, 0.5, -10),
-        BackgroundColor3 = Color3.fromRGB(180, 60, 60),
-        Text = '\u{d7}',
-        TextColor3 = THEME.Text,
-        Font = FONT,
-        TextSize = 16,
-        BorderSizePixel = 0,
-        ZIndex = 12,
-    })
+	local collapsed  = false
+	local fullSize   = UDim2.new(0, self.Width, 0, self.Height)
+	local shrunkSize = UDim2.new(0, self.Width, 0, 27)
 
-    corner(closeBtn, 3)
-    closeBtn.MouseButton1Click:Connect(function()
-        screenGui:Destroy()
-    end)
-    makeDraggable(titleBar, window)
+	collapseBtn.MouseButton1Click:Connect(function()
+		collapsed = not collapsed
+		if collapsed then
+			collapseBtn.Text = "▶"
+			content.Visible  = false
+			tween(win, { Size = shrunkSize }, ANIM_MED)
+			tween(titleBar, { BackgroundColor3 = T.TitleBgCollapsed }, ANIM)
+		else
+			collapseBtn.Text = "▼"
+			content.Visible  = true
+			tween(win, { Size = fullSize }, ANIM_MED)
+			tween(titleBar, { BackgroundColor3 = T.TitleBgActive }, ANIM)
+		end
+	end)
 
-    local collapsed = false
-    local expandedSize = UDim2.new(0, self.Width, 0, self.Height)
-    local collapsedSize = UDim2.new(0, self.Width, 0, 28)
-    local content = newInstance('ScrollingFrame', {
-        Name = 'Content',
-        Parent = window,
-        Size = UDim2.new(1, 0, 1, -28),
-        Position = UDim2.new(0, 0, 0, 28),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ScrollBarThickness = 4,
-        ScrollBarImageColor3 = THEME.Accent,
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ScrollingDirection = Enum.ScrollingDirection.Y,
-    })
+	win.MouseEnter:Connect(function()
+		if not collapsed then tween(titleBar, { BackgroundColor3 = T.TitleBgActive }) end
+	end)
+	win.MouseLeave:Connect(function()
+		if not collapsed then tween(titleBar, { BackgroundColor3 = T.TitleBg }) end
+	end)
 
-    collapseBtn.MouseButton1Click:Connect(function()
-        collapsed = not collapsed
+	self._gui     = gui
+	self._win     = win
+	self._content = content
 
-        if collapsed then
-            collapseBtn.Text = '\u{25b6}'
-            content.Visible = false
-
-            makeTween(window, {Size = collapsedSize}, 0.15)
-            makeTween(titleBar, {
-                BackgroundColor3 = THEME.TitleBgCollapsed,
-            }, 0.1)
-        else
-            collapseBtn.Text = '\u{25bc}'
-            content.Visible = true
-
-            makeTween(window, {Size = expandedSize}, 0.15)
-            makeTween(titleBar, {
-                BackgroundColor3 = THEME.TitleBgActive,
-            }, 0.1)
-        end
-    end)
-
-    self._gui = screenGui
-    self._window = window
-    self._content = content
-    self._yOffset = PAD
-
-    return self
+	return self
 end
-function ImGui:_nextY()
-    local y = self._yOffset
 
-    return y
+function ImGui:_getContent()
+	if self._activeTab and self._tabs[self._activeTab] then
+		return self._tabs[self._activeTab].frame
+	end
+	return self._content
 end
-function ImGui:_advance(h)
-    self._yOffset = self._yOffset + h + 4
-end
-function ImGui:_activeContent()
-    if self._activeTab and self._tabs[self._activeTab] then
-        return self._tabs[self._activeTab].frame
-    end
 
-    return self._content
+function ImGui:_y()
+	if self._activeTab and self._tabs[self._activeTab] then
+		return self._tabs[self._activeTab].y or PAD
+	end
+	return self._yOffset
 end
+
+function ImGui:_push(h)
+	if self._activeTab and self._tabs[self._activeTab] then
+		self._tabs[self._activeTab].y = (self._tabs[self._activeTab].y or PAD) + h + 4
+	else
+		self._yOffset = self._yOffset + h + 4
+	end
+end
+
+--// ─── SEPARATOR ───────────────────────────────────────────────────────────────
+
 function ImGui:Separator()
-    local parent = self:_activeContent()
-    local y = self:_nextY()
-
-    newInstance('Frame', {
-        Parent = parent,
-        Size = UDim2.new(1, -PAD * 2, 0, 1),
-        Position = UDim2.new(0, PAD, 0, y + 4),
-        BackgroundColor3 = THEME.Separator,
-        BorderSizePixel = 0,
-    })
-    self:_advance(9)
+	local parent = self:_getContent()
+	local y      = self:_y()
+	inst("Frame", {
+		Parent           = parent,
+		Size             = UDim2.new(1, -PAD * 2, 0, 1),
+		Position         = UDim2.new(0, PAD, 0, y + 5),
+		BackgroundColor3 = T.Separator,
+		BorderSizePixel  = 0,
+	})
+	self:_push(11)
 end
+
+--// ─── TEXT ────────────────────────────────────────────────────────────────────
+
 function ImGui:Text(text, color)
-    local parent = self:_activeContent()
-    local y = self:_nextY()
-
-    label(parent, text, UDim2.new(0, PAD, 0, y), UDim2.new(1, -PAD * 2, 0, ITEM_H), color or THEME.Text)
-    self:_advance(ITEM_H)
+	local parent = self:_getContent()
+	local y      = self:_y()
+	mkLabel(parent, text,
+		UDim2.new(0, PAD, 0, y),
+		UDim2.new(1, -PAD * 2, 0, ITEM_H),
+		color or T.Text
+	)
+	self:_push(ITEM_H)
 end
+
+--// ─── BUTTON ──────────────────────────────────────────────────────────────────
+
 function ImGui:Button(text, callback)
-    local parent = self:_activeContent()
-    local y = self:_nextY()
-    local btn = newInstance('TextButton', {
-        Parent = parent,
-        Size = UDim2.new(1, -PAD * 2, 0, ITEM_H),
-        Position = UDim2.new(0, PAD, 0, y),
-        BackgroundColor3 = THEME.Button,
-        Text = text,
-        TextColor3 = THEME.Text,
-        Font = FONT,
-        TextSize = FONT_SIZE,
-        BorderSizePixel = 0,
-        AutoButtonColor = false,
-    })
+	local parent = self:_getContent()
+	local y      = self:_y()
 
-    corner(btn)
-    stroke(btn, THEME.Border, 1)
-    btn.MouseEnter:Connect(function()
-        makeTween(btn, {
-            BackgroundColor3 = THEME.ButtonHover,
-        })
-    end)
-    btn.MouseLeave:Connect(function()
-        makeTween(btn, {
-            BackgroundColor3 = THEME.Button,
-        })
-    end)
-    btn.MouseButton1Down:Connect(function()
-        makeTween(btn, {
-            BackgroundColor3 = THEME.ButtonActive,
-        })
-    end)
-    btn.MouseButton1Up:Connect(function()
-        makeTween(btn, {
-            BackgroundColor3 = THEME.ButtonHover,
-        })
+	local btn = inst("TextButton", {
+		Parent           = parent,
+		Size             = UDim2.new(1, -PAD * 2, 0, ITEM_H),
+		Position         = UDim2.new(0, PAD, 0, y),
+		BackgroundColor3 = T.Button,
+		Text             = text,
+		TextColor3       = T.Text,
+		Font             = FONT,
+		TextSize         = FSIZE,
+		BorderSizePixel  = 0,
+		AutoButtonColor  = false,
+	})
+	applyCorner(btn)
 
-        if callback then
-            callback()
-        end
-    end)
-    self:_advance(ITEM_H)
+	btn.MouseEnter:Connect(function()       tween(btn, { BackgroundColor3 = T.ButtonHover }) end)
+	btn.MouseLeave:Connect(function()       tween(btn, { BackgroundColor3 = T.Button }) end)
+	btn.MouseButton1Down:Connect(function() tween(btn, { BackgroundColor3 = T.ButtonActive }) end)
+	btn.MouseButton1Up:Connect(function()
+		tween(btn, { BackgroundColor3 = T.ButtonHover })
+		if callback then callback() end
+	end)
 
-    return btn
+	self:_push(ITEM_H)
+	return btn
 end
+
+--// ─── CHECKBOX ────────────────────────────────────────────────────────────────
+
 function ImGui:Checkbox(text, default, callback)
-    local parent = self:_activeContent()
-    local y = self:_nextY()
-    local state = default or false
-    local row = newInstance('Frame', {
-        Parent = parent,
-        Size = UDim2.new(1, -PAD * 2, 0, ITEM_H),
-        Position = UDim2.new(0, PAD, 0, y),
-        BackgroundTransparency = 1,
-    })
-    local box = newInstance('Frame', {
-        Parent = row,
-        Size = UDim2.new(0, 16, 0, 16),
-        Position = UDim2.new(0, 0, 0.5, -8),
-        BackgroundColor3 = THEME.FrameBg,
-        BorderSizePixel = 0,
-    })
+	local parent = self:_getContent()
+	local y      = self:_y()
+	local state  = default or false
 
-    corner(box, 3)
-    stroke(box, THEME.Border, 1)
+	local row = inst("Frame", {
+		Parent               = parent,
+		Size                 = UDim2.new(1, -PAD * 2, 0, ITEM_H),
+		Position             = UDim2.new(0, PAD, 0, y),
+		BackgroundTransparency = 1,
+	})
 
-    local check = newInstance('Frame', {
-        Parent = box,
-        Size = UDim2.new(0, 10, 0, 10),
-        Position = UDim2.new(0.5, -5, 0.5, -5),
-        BackgroundColor3 = THEME.CheckMark,
-        BorderSizePixel = 0,
-        BackgroundTransparency = state and 0 or 1,
-    })
+	local box = inst("Frame", {
+		Parent           = row,
+		Size             = UDim2.new(0, 14, 0, 14),
+		Position         = UDim2.new(0, 0, 0.5, -7),
+		BackgroundColor3 = T.FrameBg,
+		BorderSizePixel  = 0,
+	})
+	applyCorner(box, 2)
+	applyStroke(box, T.WindowBorder, 1)
 
-    corner(check, 2)
-    label(row, text, UDim2.new(0, 24, 0, 0), UDim2.new(1, -24, 1, 0), THEME.Text)
+	local fill = inst("Frame", {
+		Parent               = box,
+		Size                 = UDim2.new(0, 8, 0, 8),
+		Position             = UDim2.new(0.5, -4, 0.5, -4),
+		BackgroundColor3     = T.CheckMark,
+		BorderSizePixel      = 0,
+		BackgroundTransparency = state and 0 or 1,
+	})
+	applyCorner(fill, 2)
 
-    local hitbox = newInstance('TextButton', {
-        Parent = row,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = '',
-    })
+	mkLabel(row, text,
+		UDim2.new(0, 21, 0, 0),
+		UDim2.new(1, -21, 1, 0),
+		T.Text
+	)
 
-    hitbox.MouseButton1Click:Connect(function()
-        state = not state
+	local hit = inst("TextButton", {
+		Parent               = row,
+		Size                 = UDim2.new(1, 0, 1, 0),
+		BackgroundTransparency = 1,
+		Text                 = "",
+		ZIndex               = 5,
+	})
 
-        makeTween(check, {
-            BackgroundTransparency = state and 0 or 1,
-        })
-        makeTween(box, {
-            BackgroundColor3 = state and THEME.FrameBgActive or THEME.FrameBg,
-        })
+	hit.MouseEnter:Connect(function() tween(box, { BackgroundColor3 = T.FrameBgHover }) end)
+	hit.MouseLeave:Connect(function() tween(box, { BackgroundColor3 = state and T.FrameBgActive or T.FrameBg }) end)
+	hit.MouseButton1Click:Connect(function()
+		state = not state
+		tween(fill, { BackgroundTransparency = state and 0 or 1 })
+		tween(box,  { BackgroundColor3 = state and T.FrameBgActive or T.FrameBg })
+		if callback then callback(state) end
+	end)
 
-        if callback then
-            callback(state)
-        end
-    end)
-    self:_advance(ITEM_H)
-
-    return {
-        GetValue = function()
-            return state
-        end,
-        SetValue = function(v)
-            state = v
-            check.BackgroundTransparency = v and 0 or 1
-            box.BackgroundColor3 = v and THEME.FrameBgActive or THEME.FrameBg
-        end,
-    }
+	self:_push(ITEM_H)
+	return {
+		GetValue = function() return state end,
+		SetValue = function(v)
+			state = v
+			fill.BackgroundTransparency = v and 0 or 1
+			box.BackgroundColor3 = v and T.FrameBgActive or T.FrameBg
+		end,
+	}
 end
+
+--// ─── SLIDER ──────────────────────────────────────────────────────────────────
+
 function ImGui:Slider(text, min, max, default, callback)
-    local parent = self:_activeContent()
-    local y = self:_nextY()
-    local value = math.clamp(default or min, min, max)
-    local totalH = ITEM_H + 6
-    local lbl = label(parent, text .. ': ' .. tostring(math.floor(value)), UDim2.new(0, PAD, 0, y), UDim2.new(1, -PAD * 2, 0, ITEM_H - 8), THEME.Text)
-    local track = newInstance('Frame', {
-        Parent = parent,
-        Size = UDim2.new(1, -PAD * 2, 0, 6),
-        Position = UDim2.new(0, PAD, 0, y + ITEM_H - 4),
-        BackgroundColor3 = THEME.FrameBg,
-        BorderSizePixel = 0,
-    })
+	local parent = self:_getContent()
+	local y      = self:_y()
+	local value  = math.clamp(default or min, min, max)
+	local totalH = ITEM_H + 10
 
-    corner(track, 3)
-    stroke(track, THEME.Border, 1)
+	local lbl = mkLabel(parent, text .. ":  " .. tostring(math.floor(value)),
+		UDim2.new(0, PAD, 0, y),
+		UDim2.new(1, -PAD * 2, 0, ITEM_H - 6),
+		T.Text
+	)
 
-    local fill = newInstance('Frame', {
-        Parent = track,
-        Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
-        BackgroundColor3 = THEME.Accent,
-        BorderSizePixel = 0,
-    })
+	local track = inst("Frame", {
+		Parent           = parent,
+		Size             = UDim2.new(1, -PAD * 2, 0, 4),
+		Position         = UDim2.new(0, PAD, 0, y + ITEM_H - 2),
+		BackgroundColor3 = T.SliderTrack,
+		BorderSizePixel  = 0,
+	})
+	applyCorner(track, 2)
+	applyStroke(track, T.WindowBorder, 1)
 
-    corner(fill, 3)
+	local fill = inst("Frame", {
+		Parent           = track,
+		Size             = UDim2.new((value - min) / (max - min), 0, 1, 0),
+		BackgroundColor3 = T.SliderGrab,
+		BorderSizePixel  = 0,
+	})
+	applyCorner(fill, 2)
 
-    local grab = newInstance('Frame', {
-        Parent = track,
-        Size = UDim2.new(0, 12, 0, 12),
-        Position = UDim2.new((value - min) / (max - min), -6, 0.5, -6),
-        BackgroundColor3 = THEME.SliderGrab,
-        BorderSizePixel = 0,
-        ZIndex = 5,
-    })
+	local grab = inst("Frame", {
+		Parent           = track,
+		Size             = UDim2.new(0, 10, 0, 10),
+		Position         = UDim2.new((value - min) / (max - min), -5, 0.5, -5),
+		BackgroundColor3 = T.SliderGrab,
+		BorderSizePixel  = 0,
+		ZIndex           = 4,
+	})
+	applyCorner(grab, 5)
 
-    corner(grab, 6)
-    stroke(grab, THEME.Border, 1)
+	local dragging = false
 
-    local dragging = false
+	local function applyX(inputX)
+		local pct = math.clamp((inputX - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+		local v   = math.floor(min + pct * (max - min))
+		value     = v
+		local p   = (v - min) / (max - min)
+		fill.Size          = UDim2.new(p, 0, 1, 0)
+		grab.Position      = UDim2.new(p, -5, 0.5, -5)
+		lbl.Text           = text .. ":  " .. tostring(v)
+		grab.BackgroundColor3 = T.SliderGrabActive
+		if callback then callback(v) end
+	end
 
-    local function updateSlider(inputX)
-        local absPos = track.AbsolutePosition.X
-        local absSize = track.AbsoluteSize.X
-        local t = math.clamp((inputX - absPos) / absSize, 0, 1)
-        local v = math.floor(min + t * (max - min))
+	track.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			applyX(input.Position.X)
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+			applyX(input.Position.X)
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and dragging then
+			dragging = false
+			tween(grab, { BackgroundColor3 = T.SliderGrab })
+		end
+	end)
 
-        value = v
-
-        local pct = (v - min) / (max - min)
-
-        fill.Size = UDim2.new(pct, 0, 1, 0)
-        grab.Position = UDim2.new(pct, -6, 0.5, -6)
-        lbl.Text = text .. ': ' .. tostring(v)
-        grab.BackgroundColor3 = THEME.SliderGrabActive
-
-        if callback then
-            callback(v)
-        end
-    end
-
-    track.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-
-            updateSlider(input.Position.X)
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input.Position.X)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-
-            makeTween(grab, {
-                BackgroundColor3 = THEME.SliderGrab,
-            })
-        end
-    end)
-    self:_advance(totalH + 6)
-
-    return {
-        GetValue = function()
-            return value
-        end,
-        SetValue = function(v)
-            value = math.clamp(v, min, max)
-
-            local pct = (value - min) / (max - min)
-
-            fill.Size = UDim2.new(pct, 0, 1, 0)
-            grab.Position = UDim2.new(pct, -6, 0.5, -6)
-            lbl.Text = text .. ': ' .. tostring(math.floor(value))
-        end,
-    }
+	self:_push(totalH)
+	return {
+		GetValue = function() return value end,
+		SetValue = function(v)
+			value = math.clamp(v, min, max)
+			local p = (value - min) / (max - min)
+			fill.Size     = UDim2.new(p, 0, 1, 0)
+			grab.Position = UDim2.new(p, -5, 0.5, -5)
+			lbl.Text      = text .. ":  " .. tostring(math.floor(value))
+		end,
+	}
 end
+
+--// ─── DROPDOWN ────────────────────────────────────────────────────────────────
+
 function ImGui:Dropdown(text, options, default, callback)
-    local parent = self:_activeContent()
-    local y = self:_nextY()
-    local selected = default or options[1]
-    local open = false
-    local wrapper = newInstance('Frame', {
-        Parent = parent,
-        Size = UDim2.new(1, -PAD * 2, 0, ITEM_H),
-        Position = UDim2.new(0, PAD, 0, y),
-        BackgroundTransparency = 1,
-        ClipsDescendants = false,
-        ZIndex = 20,
-    })
-    local header = newInstance('TextButton', {
-        Parent = wrapper,
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = THEME.FrameBg,
-        Text = '',
-        BorderSizePixel = 0,
-        AutoButtonColor = false,
-        ZIndex = 20,
-    })
+	local parent   = self:_getContent()
+	local y        = self:_y()
+	local selected = default or options[1]
+	local open     = false
 
-    corner(header)
-    stroke(header, THEME.Border, 1)
+	local wrapper = inst("Frame", {
+		Parent               = parent,
+		Size                 = UDim2.new(1, -PAD * 2, 0, ITEM_H),
+		Position             = UDim2.new(0, PAD, 0, y),
+		BackgroundTransparency = 1,
+		ClipsDescendants     = false,
+		ZIndex               = 20,
+	})
 
-    label(header, text .. ': ' .. selected, UDim2.new(0, PAD, 0, 0), UDim2.new(1, -30, 1, 0), THEME.Text).ZIndex = 21
+	local header = inst("TextButton", {
+		Parent           = wrapper,
+		Size             = UDim2.new(1, 0, 1, 0),
+		BackgroundColor3 = T.FrameBg,
+		Text             = "",
+		BorderSizePixel  = 0,
+		AutoButtonColor  = false,
+		ZIndex           = 20,
+	})
+	applyCorner(header)
+	applyStroke(header, T.WindowBorder, 1)
 
-    local arrow = label(header, '\u{25be}', UDim2.new(1, -22, 0, 0), UDim2.new(0, 18, 1, 0), THEME.TextDim, FONT_SIZE, Enum.TextXAlignment.Center)
+	local headerLbl = mkLabel(header, text .. "  " .. selected,
+		UDim2.new(0, PAD, 0, 0),
+		UDim2.new(1, -28, 1, 0),
+		T.Text
+	)
+	headerLbl.ZIndex = 21
 
-    arrow.ZIndex = 21
+	local arrow = mkLabel(header, "▾",
+		UDim2.new(1, -20, 0, 0),
+		UDim2.new(0, 16, 1, 0),
+		T.TextDisabled, FSIZE, Enum.TextXAlignment.Center
+	)
+	arrow.ZIndex = 21
 
-    local dropFrame = newInstance('Frame', {
-        Parent = wrapper,
-        Size = UDim2.new(1, 0, 0, 0),
-        Position = UDim2.new(0, 0, 1, 2),
-        BackgroundColor3 = THEME.Dropdown,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
-        ZIndex = 50,
-    })
+	local panel = inst("Frame", {
+		Parent           = wrapper,
+		Size             = UDim2.new(1, 0, 0, 0),
+		Position         = UDim2.new(0, 0, 1, 1),
+		BackgroundColor3 = T.DropdownBg,
+		BorderSizePixel  = 0,
+		ClipsDescendants = true,
+		ZIndex           = 60,
+	})
+	applyCorner(panel)
+	applyStroke(panel, T.WindowBorder, 1)
 
-    corner(dropFrame)
-    stroke(dropFrame, THEME.Border, 1)
+	local itemH = ITEM_H + 1
+	local fullH = #options * itemH + 4
 
-    local itemList = newInstance('Frame', {
-        Parent = dropFrame,
-        Size = UDim2.new(1, 0, 0, #options * (ITEM_H + 2) + 4),
-        Position = UDim2.new(0, 0, 0, 2),
-        BackgroundTransparency = 1,
-        ZIndex = 51,
-    })
-    local itemHeight = ITEM_H + 2
-    local fullH = #options * itemHeight + 4
+	for i, opt in ipairs(options) do
+		local row = inst("TextButton", {
+			Parent           = panel,
+			Size             = UDim2.new(1, -4, 0, ITEM_H),
+			Position         = UDim2.new(0, 2, 0, (i - 1) * itemH + 2),
+			BackgroundColor3 = T.DropdownItem,
+			Text             = "",
+			BorderSizePixel  = 0,
+			AutoButtonColor  = false,
+			ZIndex           = 61,
+		})
+		applyCorner(row, 2)
+		mkLabel(row, opt, UDim2.new(0, PAD, 0, 0), UDim2.new(1, -PAD, 1, 0), T.Text).ZIndex = 62
+		row.MouseEnter:Connect(function() tween(row, { BackgroundColor3 = T.DropdownHover }) end)
+		row.MouseLeave:Connect(function() tween(row, { BackgroundColor3 = T.DropdownItem }) end)
+		row.MouseButton1Click:Connect(function()
+			selected       = opt
+			headerLbl.Text = text .. "  " .. opt
+			open           = false
+			tween(panel, { Size = UDim2.new(1, 0, 0, 0) }, ANIM_MED)
+			arrow.Text = "▾"
+			if callback then callback(opt) end
+		end)
+	end
 
-    for i, opt in ipairs(options)do
-        local item = newInstance('TextButton', {
-            Parent = itemList,
-            Size = UDim2.new(1, -4, 0, ITEM_H),
-            Position = UDim2.new(0, 2, 0, (i - 1) * itemHeight + 2),
-            BackgroundColor3 = THEME.DropdownItem,
-            Text = '',
-            BorderSizePixel = 0,
-            AutoButtonColor = false,
-            ZIndex = 52,
-        })
+	header.MouseEnter:Connect(function() tween(header, { BackgroundColor3 = T.FrameBgHover }) end)
+	header.MouseLeave:Connect(function() tween(header, { BackgroundColor3 = T.FrameBg }) end)
+	header.MouseButton1Click:Connect(function()
+		open = not open
+		if open then
+			tween(panel, { Size = UDim2.new(1, 0, 0, fullH) }, ANIM_MED)
+			arrow.Text = "▴"
+		else
+			tween(panel, { Size = UDim2.new(1, 0, 0, 0) }, ANIM_MED)
+			arrow.Text = "▾"
+		end
+	end)
 
-        corner(item, 3)
-
-        label(item, opt, UDim2.new(0, PAD, 0, 0), UDim2.new(1, -PAD, 1, 0), THEME.Text).ZIndex = 53
-
-        item.MouseEnter:Connect(function()
-            makeTween(item, {
-                BackgroundColor3 = THEME.DropdownHover,
-            })
-        end)
-        item.MouseLeave:Connect(function()
-            makeTween(item, {
-                BackgroundColor3 = THEME.DropdownItem,
-            })
-        end)
-        item.MouseButton1Click:Connect(function()
-            selected = opt
-
-            for _, c in ipairs(header:GetChildren())do
-                if c:IsA('TextLabel') then
-                    c.Text = text .. ': ' .. opt
-                end
-            end
-
-            open = false
-
-            makeTween(dropFrame, {
-                Size = UDim2.new(1, 0, 0, 0),
-            })
-
-            arrow.Text = '\u{25be}'
-
-            if callback then
-                callback(opt)
-            end
-        end)
-    end
-
-    header.MouseButton1Click:Connect(function()
-        open = not open
-
-        if open then
-            makeTween(dropFrame, {
-                Size = UDim2.new(1, 0, 0, fullH),
-            })
-
-            arrow.Text = '\u{25b4}'
-        else
-            makeTween(dropFrame, {
-                Size = UDim2.new(1, 0, 0, 0),
-            })
-
-            arrow.Text = '\u{25be}'
-        end
-    end)
-    hoverable(header, THEME.FrameBg, THEME.FrameBgHover)
-    self:_advance(ITEM_H)
-
-    return {
-        GetValue = function()
-            return selected
-        end,
-    }
+	self:_push(ITEM_H)
+	return {
+		GetValue = function() return selected end,
+	}
 end
-function ImGui:BeginTabBar(tabNames)
-    local barH = 28
-    local y = self:_nextY()
-    local bar = newInstance('Frame', {
-        Parent = self._content,
-        Size = UDim2.new(1, 0, 0, barH),
-        Position = UDim2.new(0, 0, 0, y),
-        BackgroundColor3 = THEME.TitleBg,
-        BorderSizePixel = 0,
-    })
-    local tabW = math.floor(self.Width / #tabNames)
 
-    for i, name in ipairs(tabNames)do
-        local tabFrame = newInstance('Frame', {
-            Parent = self._content,
-            Size = UDim2.new(1, 0, 1, -(y + barH + PAD)),
-            Position = UDim2.new(0, 0, 0, y + barH + PAD),
-            BackgroundTransparency = 1,
-            Visible = false,
-            ClipsDescendants = false,
-        })
+--// ─── TAB BAR ─────────────────────────────────────────────────────────────────
 
-        self._tabs[name] = {
-            frame = tabFrame,
-            yOffset = PAD,
-            button = nil,
-        }
+function ImGui:BeginTabBar(names)
+	local barH = 24
+	local y    = self._yOffset
 
-        local btn = newInstance('TextButton', {
-            Parent = bar,
-            Size = UDim2.new(0, tabW, 1, 0),
-            Position = UDim2.new(0, (i - 1) * tabW, 0, 0),
-            BackgroundColor3 = THEME.Tab,
-            Text = name,
-            TextColor3 = THEME.TextDim,
-            Font = FONT,
-            TextSize = FONT_SIZE,
-            BorderSizePixel = 0,
-            AutoButtonColor = false,
-        })
+	local bar = inst("Frame", {
+		Parent           = self._content,
+		Size             = UDim2.new(1, 0, 0, barH),
+		Position         = UDim2.new(0, 0, 0, y),
+		BackgroundColor3 = T.TabBar,
+		BorderSizePixel  = 0,
+	})
 
-        self._tabs[name].button = btn
+	inst("Frame", {
+		Parent           = self._content,
+		Size             = UDim2.new(1, 0, 0, 1),
+		Position         = UDim2.new(0, 0, 0, y + barH),
+		BackgroundColor3 = T.Separator,
+		BorderSizePixel  = 0,
+	})
 
-        btn.MouseEnter:Connect(function()
-            if self._activeTab ~= name then
-                makeTween(btn, {
-                    BackgroundColor3 = THEME.TabHover,
-                })
-            end
-        end)
-        btn.MouseLeave:Connect(function()
-            if self._activeTab ~= name then
-                makeTween(btn, {
-                    BackgroundColor3 = THEME.Tab,
-                })
-            end
-        end)
-        btn.MouseButton1Click:Connect(function()
-            if self._activeTab then
-                local prev = self._tabs[self._activeTab]
+	local tabW = math.floor(self.Width / #names)
 
-                prev.frame.Visible = false
+	for i, name in ipairs(names) do
+		local tabFrame = inst("Frame", {
+			Parent               = self._content,
+			Size                 = UDim2.new(1, 0, 0, 0),
+			Position             = UDim2.new(0, 0, 0, y + barH + 2 + PAD),
+			BackgroundTransparency = 1,
+			Visible              = false,
+			ClipsDescendants     = false,
+			AutomaticSize        = Enum.AutomaticSize.Y,
+		})
 
-                makeTween(prev.button, {
-                    BackgroundColor3 = THEME.Tab,
-                })
+		self._tabs[name] = { frame = tabFrame, y = PAD, button = nil, underline = nil }
 
-                prev.button.TextColor3 = THEME.TextDim
-            end
+		local btn = inst("TextButton", {
+			Parent           = bar,
+			Size             = UDim2.new(0, tabW, 1, 0),
+			Position         = UDim2.new(0, (i - 1) * tabW, 0, 0),
+			BackgroundColor3 = T.Tab,
+			Text             = name,
+			TextColor3       = T.TextDisabled,
+			Font             = FONT,
+			TextSize         = FSIZE,
+			BorderSizePixel  = 0,
+			AutoButtonColor  = false,
+		})
 
-            self._activeTab = name
-            self._tabs[name].frame.Visible = true
+		--// active underline accent bar
+		local underline = inst("Frame", {
+			Parent               = btn,
+			Size                 = UDim2.new(1, 0, 0, 2),
+			Position             = UDim2.new(0, 0, 1, -2),
+			BackgroundColor3     = T.SliderGrabActive,
+			BorderSizePixel      = 0,
+			BackgroundTransparency = 1,
+		})
 
-            makeTween(btn, {
-                BackgroundColor3 = THEME.TabActive,
-            })
+		self._tabs[name].button    = btn
+		self._tabs[name].underline = underline
 
-            btn.TextColor3 = THEME.Text
-        end)
-    end
+		btn.MouseEnter:Connect(function()
+			if self._activeTab ~= name then tween(btn, { BackgroundColor3 = T.TabHovered }) end
+		end)
+		btn.MouseLeave:Connect(function()
+			if self._activeTab ~= name then tween(btn, { BackgroundColor3 = T.Tab }) end
+		end)
+		btn.MouseButton1Click:Connect(function()
+			if self._activeTab then
+				local prev = self._tabs[self._activeTab]
+				prev.frame.Visible     = false
+				prev.button.TextColor3 = T.TextDisabled
+				tween(prev.button,    { BackgroundColor3 = T.Tab })
+				tween(prev.underline, { BackgroundTransparency = 1 })
+			end
+			self._activeTab  = name
+			tabFrame.Visible = true
+			btn.TextColor3   = T.Text
+			tween(btn,       { BackgroundColor3 = T.TabActive })
+			tween(underline, { BackgroundTransparency = 0 })
+		end)
+	end
 
-    self:_advance(barH + PAD)
+	self._yOffset = self._yOffset + barH + 3 + PAD
 
-    if #tabNames > 0 then
-        local first = tabNames[1]
-
-        self._activeTab = first
-        self._tabs[first].frame.Visible = true
-        self._tabs[first].button.BackgroundColor3 = THEME.TabActive
-        self._tabs[first].button.TextColor3 = THEME.Text
-    end
+	if #names > 0 then
+		local first = names[1]
+		self._activeTab = first
+		self._tabs[first].frame.Visible              = true
+		self._tabs[first].button.BackgroundColor3    = T.TabActive
+		self._tabs[first].button.TextColor3          = T.Text
+		self._tabs[first].underline.BackgroundTransparency = 0
+	end
 end
+
 function ImGui:SetTab(name)
-    if not self._tabs[name] then
-        return
-    end
-    if self._activeTab then
-        local prev = self._tabs[self._activeTab]
-
-        prev.frame.Visible = false
-
-        makeTween(prev.button, {
-            BackgroundColor3 = THEME.Tab,
-        })
-
-        prev.button.TextColor3 = THEME.TextDim
-    end
-
-    self._activeTab = name
-
-    local t = self._tabs[name]
-
-    t.frame.Visible = true
-
-    makeTween(t.button, {
-        BackgroundColor3 = THEME.TabActive,
-    })
-
-    t.button.TextColor3 = THEME.Text
-end
-
-local _origNextY = ImGui._nextY
-local _origAdvance = ImGui._advance
-
-function ImGui:_nextY()
-    if self._activeTab and self._tabs[self._activeTab] then
-        return self._tabs[self._activeTab].yOffset or PAD
-    end
-
-    return self._yOffset
-end
-function ImGui:_advance(h)
-    if self._activeTab and self._tabs[self._activeTab] then
-        self._tabs[self._activeTab].yOffset = (self._tabs[self._activeTab].yOffset or PAD) + h + 4
-    else
-        self._yOffset = self._yOffset + h + 4
-    end
+	if not self._tabs[name] then return end
+	if self._activeTab then
+		local prev = self._tabs[self._activeTab]
+		prev.frame.Visible     = false
+		prev.button.TextColor3 = T.TextDisabled
+		tween(prev.button,    { BackgroundColor3 = T.Tab })
+		tween(prev.underline, { BackgroundTransparency = 1 })
+	end
+	self._activeTab = name
+	local t = self._tabs[name]
+	t.frame.Visible  = true
+	t.button.TextColor3 = T.Text
+	tween(t.button,    { BackgroundColor3 = T.TabActive })
+	tween(t.underline, { BackgroundTransparency = 0 })
 end
 
 return ImGui
